@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ARIA – Personal Assistant</title>
+  <style>
+    :root {
+      --bg: #0a0a1a;
+      --card: #11112a;
+      --accent: #7c3aed;
+      --glow: #a855f7;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: rgba(124, 58, 237, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.07) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+      animation: float 8s ease-in-out infinite;
+      z-index: 0;
+    }
+    .orb1 { width: 400px; height: 400px; background: #7c3aed; top: -100px; left: -100px; animation-delay: 0s; }
+    .orb2 { width: 300px; height: 300px; background: #06b6d4; bottom: -80px; right: -80px; animation-delay: 3s; }
+    .orb3 { width: 200px; height: 200px; background: #ec4899; top: 50%; left: 50%; animation-delay: 6s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* Header */
+    header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 40px 20px 20px;
+    }
+
+    .logo-ring {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 2px solid var(--glow);
+      box-shadow: 0 0 20px var(--glow), 0 0 60px rgba(168,85,247,0.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      animation: pulse-ring 2s ease-in-out infinite;
+      font-size: 32px;
+    }
+
+    @keyframes pulse-ring {
+      0%, 100% { box-shadow: 0 0 20px var(--glow), 0 0 60px rgba(168,85,247,0.3); }
+      50% { box-shadow: 0 0 40px var(--glow), 0 0 100px rgba(168,85,247,0.5); }
+    }
+
+    h1 { font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #a855f7, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .tagline { color: var(--muted); margin-top: 6px; font-size: 0.95rem; letter-spacing: 0.05em; }
+
+    /* Main layout */
+    .container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 900px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1.8fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 650px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    /* Card style */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      border-color: var(--glow);
+      box-shadow: 0 0 20px rgba(168,85,247,0.15);
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--glow);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Notes / Storage panel */
+    #notes-list {
+      list-style: none;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+    #notes-list li {
+      background: rgba(124,58,237,0.1);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      display: flex; justify-content: space-between; align-items: center;
+      animation: slideIn 0.3s ease;
+    }
+    #notes-list li button {
+      background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1rem;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .input-row {
+      display: flex; gap: 8px;
+    }
+
+    input[type="text"], textarea {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--glow);
+      box-shadow: 0 0 10px rgba(168,85,247,0.2);
+    }
+
+    button.btn {
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      border: none; border-radius: 10px;
+      color: white; padding: 10px 16px;
+      cursor: pointer; font-size: 0.9rem; font-weight: 600;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    button.btn:hover { opacity: 0.9; }
+    button.btn:active { transform: scale(0.97); }
+
+    /* Chat panel */
+    #chat-box {
+      height: 320px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      padding-right: 4px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    #chat-box::-webkit-scrollbar { width: 4px; }
+    #chat-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .msg {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      animation: popIn 0.25s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border-bottom-right-radius: 4px;
+    }
+    .msg.bot {
+      align-self: flex-start;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .typing {
+      display: flex; gap: 5px; align-items: center;
+      align-self: flex-start;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      border-radius: 14px; border-bottom-left-radius: 4px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--glow);
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-8px); }
+    }
+
+    /* Stats bar */
+    .stats {
+      position: relative; z-index: 10;
+      width: 100%; max-width: 900px;
+      padding: 0 20px 30px;
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .stat-card {
+      flex: 1; min-width: 140px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      text-align: center;
+    }
+    .stat-card .num { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #a855f7, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-card .label { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-ring">🤖</div>
+    <h1>ARIA</h1>
+    <p class="tagline">Your Animated Personal Intelligence Assistant</p>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="container">
+
+    <!-- Storage Panel -->
+    <div class="card">
+      <h2>📁 Data Storage</h2>
+      <ul id="notes-list"></ul>
+      <div class="input-row">
+        <input type="text" id="note-input" placeholder="Store a note..." />
+        <button class="btn" onclick="addNote()">Save</button>
+      </div>
+    </div>
+
+    <!-- Chat Panel -->
+    <div class="card">
+      <h2>💬 Chat with ARIA</h2>
+      <div id="chat-box"></div>
+      <div class="input-row">
+        <input type="text" id="chat-input" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter') sendMsg()" />
+        <button class="btn" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="num" id="stat-notes">0</div>
+      <div class="label">Notes Stored</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="stat-msgs">0</div>
+      <div class="label">Messages Sent</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="stat-session">0s</div>
+      <div class="label">Session Time</div>
+    </div>
+  </div>
+
+  <script>
+    // ─── State ───────────────────────────────────────────────
+    let notes = JSON.parse(localStorage.getItem('aria-notes') || '[]');
+    let msgCount = parseInt(localStorage.getItem('aria-msgs') || '0');
+    let sessionStart = Date.now();
+
+    // ─── Render notes ─────────────────────────────────────────
+    function renderNotes() {
+      const list = document.getElementById('notes-list');
+      list.innerHTML = '';
+      notes.forEach((n, i) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${n}</span><button onclick="deleteNote(${i})">✕</button>`;
+        list.appendChild(li);
+      });
+      document.getElementById('stat-notes').textContent = notes.length;
+    }
+
+    function addNote() {
+      const inp = document.getElementById('note-input');
+      const val = inp.value.trim();
+      if (!val) return;
+      notes.push(val);
+      localStorage.setItem('aria-notes', JSON.stringify(notes));
+      inp.value = '';
+      renderNotes();
+    }
+
+    function deleteNote(i) {
+      notes.splice(i, 1);
+      localStorage.setItem('aria-notes', JSON.stringify(notes));
+      renderNotes();
+    }
+
+    // ─── Chat ─────────────────────────────────────────────────
+    const responses = {
+      hello: ["Hey there! How can I help you today? 😊", "Hello! ARIA at your service 🤖"],
+      hi: ["Hi! What's on your mind?", "Hey! Need anything?"],
+      how: ["I'm running perfectly at 100% efficiency! ⚡", "All systems operational! How about you?"],
+      note: ["Got it! Use the storage panel on the left to save notes 📁", "I can store data for you — just type in the Save panel!"],
+      help: ["I can chat with you, store your notes, and keep track of your session. Try asking me anything!", "Sure! Ask me questions, store notes, or just chat 🚀"],
+      time: [`It's ${new Date().toLocaleTimeString()} ⏰`],
+      date: [`Today is ${new Date().toLocaleDateString('en-IN', {weekday:'long', year:'numeric', month:'long', day:'numeric'})} 📅`],
+      default: [
+        "Interesting! Tell me more 🧠",
+        "I'm processing that... 🔄",
+        "Got it! Anything else I can do for you?",
+        "Sure thing! Noted 📝",
+        "That's a great point! Let me think... 💡"
+      ]
+    };
+
+    function getReply(msg) {
+      const lower = msg.toLowerCase();
+      for (const key of Object.keys(responses)) {
+        if (key !== 'default' && lower.includes(key)) {
+          const arr = responses[key];
+          return arr[Math.floor(Math.random() * arr.length)];
+        }
+      }
+      const d = responses.default;
+      return d[Math.floor(Math.random() * d.length)];
+    }
+
+    function appendMsg(text, type) {
+      const box = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      div.className = `msg ${type}`;
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function sendMsg() {
+      const inp = document.getElementById('chat-input');
+      const val = inp.value.trim();
+      if (!val) return;
+      appendMsg(val, 'user');
+      inp.value = '';
+      msgCount++;
+      localStorage.setItem('aria-msgs', msgCount);
+      document.getElementById('stat-msgs').textContent = msgCount;
+
+      // Typing indicator
+      const box = document.getElementById('chat-box');
+      const typing = document.createElement('div');
+      typing.className = 'typing';
+      typing.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+      box.appendChild(typing);
+      box.scrollTop = box.scrollHeight;
+
+      setTimeout(() => {
+        box.removeChild(typing);
+        appendMsg(getReply(val), 'bot');
+      }, 900 + Math.random() * 600);
+    }
+
+    // ─── Session timer ────────────────────────────────────────
+    setInterval(() => {
+      const secs = Math.floor((Date.now() - sessionStart) / 1000);
+      const m = Math.floor(secs / 60), s = secs % 60;
+      document.getElementById('stat-session').textContent = m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }, 1000);
+
+    // ─── Init ─────────────────────────────────────────────────
+    renderNotes();
+    document.getElementById('stat-msgs').textContent = msgCount;
+
+    // Welcome message
+    setTimeout(() => appendMsg("Hello! I'm ARIA 👋 How can I assist you today?", 'bot'), 600);
+  </script>
+</body>
+</html>
