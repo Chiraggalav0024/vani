@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chatbot</title>
+  <style>
+    body { font-family: Arial; background: #f5f5f5; }
+    .box { width: 400px; margin: 50px auto; background: white; padding: 15px; border-radius: 10px; }
+    #chat { height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fafafa; }
+    .msg { margin: 8px 0; }
+    .you { color: blue; }
+    .bot { color: green; }
+    input { width: 75%; padding: 8px; }
+    button { padding: 8px 12px; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h2>My Chatbot</h2>
+
+  <div id="chat"></div><br>
+
+  <input id="msg" placeholder="Type message..." />
+  <button onclick="sendMsg()">Send</button>
+</div>
+
+<script>
+  const input = document.getElementById("msg");
+  input.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") sendMsg();
+  });
+
+  async function sendMsg() {
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const chat = document.getElementById("chat");
+    chat.innerHTML += `<div class="msg you"><b>You:</b> ${msg}</div>`;
+
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: msg})
+    });
+
+    const data = await res.json();
+    chat.innerHTML += `<div class="msg bot"><b>Bot:</b> ${data.reply}</div>`;
+
+    input.value = "";
+    chat.scrollTop = chat.scrollHeight;
+  }
+</script>
+</body>
+</html>
